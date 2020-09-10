@@ -16,8 +16,8 @@ from cam import CAM
 from utils import tensor_to_image
 
 googlenet = models.googlenet(pretrained=True)
-resnet34 = models.resnet18(pretrained=True)
-alexnet = models.alexnet(pretrained=True)
+#resnet34 = models.resnet18(pretrained=True)
+#alexnet = models.alexnet(pretrained=True)
 
 active_models = {}
 UPLOAD_FOLDER = 'static/images/'
