@@ -1,5 +1,4 @@
 import os
-import urllib.request
 from base64 import b64encode
 from flask import Flask, flash, request, redirect, url_for, render_template, send_file
 from werkzeug.utils import secure_filename
@@ -9,17 +8,15 @@ from PIL import Image
 from grad_cam import GradCAM
 from utils import load_image
 from classes import class_names
-import io
 from saliency import SaliencyMap
 from torchvision import models
 from cam import CAM
 from utils import tensor_to_image
+import io
 
 googlenet = models.googlenet(pretrained=True)
-#resnet34 = models.resnet18(pretrained=True)
-#alexnet = models.alexnet(pretrained=True)
 
-active_models = {}
+
 UPLOAD_FOLDER = 'static/images/'
 
 app = Flask(__name__)
@@ -28,9 +25,6 @@ ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
 
 def allowed_file(filename):
 	return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-def reset_model():
-    return DeconvNet(5, True)
 	
 @app.route('/')
 def upload_form():
@@ -85,19 +79,12 @@ def cam():
 def gradcamm():
 
     if request.method == 'GET':
-        active_models['gradcam'] = GradCAM(googlenet)
-        print('saving gradcam model')
         return render_template('gradcam.html')
     
     if 'file' not in request.files:
         return redirect(request.url)
 
-    
-    if active_models.get('gradcam'):
-            print('exsiting model loaded')
-            gradcam = active_models['gradcam']
-    else:
-        gradcam = GradCAM(googlenet)
+    gradcam = GradCAM(googlenet)
 
     file = request.files['file']
     index = None if 'select_class' not in request.form else request.form['select_class']
@@ -116,7 +103,6 @@ def gradcamm():
     print('index is : ',index)
     cam = gradcam.show_cam(int(index) if index else None)
     print(cam.size)
-    original = display_image(tensor_to_image(gradcam.img))
     result = display_image(cam)
     flash('Image successfully uploaded and displayed')
     class_dict = class_names()
@@ -124,12 +110,11 @@ def gradcamm():
         index = gradcam.cnn(gradcam.img).argmax().item()
     flash(class_dict[int(index)])
     #print(filename)
-    return render_template('gradcam.html', original=original, result=result, named_class = class_names())
+    return render_template('gradcam.html', result=result)
 
 @app.route('/saliency/', methods=['POST', 'GET'])
 def saliency():
     if request.method == 'GET':
-        active_models['saliency'] = SaliencyMap(googlenet)
         return render_template('saliency.html')
     
     if 'file' not in request.files:
@@ -144,16 +129,13 @@ def saliency():
         return redirect(request.url)
 
     if file and allowed_file(file.filename):
-        saliency = SaliencyMap(googlenet)
         image=Image.open(file).convert('RGB')
         img = load_image(image)
     else:
         return redirect(request.url)
 
-    if active_models.get('saliency'):
-        saliency = active_models['saliency']
-    else:
-        saliency = SaliencyMap(googlenet)
+    saliency = SaliencyMap(googlenet)
+
     out = saliency(img)
     print(out.size)
     out = display_image(out)

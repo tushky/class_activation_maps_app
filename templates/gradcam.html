@@ -18,21 +18,12 @@
 	  {% endif %}
 	{% endwith %}
 </p>
-{% if original %}
-		<div class="container">
-			<div class="row">                                     
-				<div class="col-sm-4">                 
-					<img class="img-responsive" src="{{original}}" />
-				</div>                  
-				<div class="col-sm-4">
-					<img class="img-responsive" src="{{result}}" />
-				</div>                  
-			</div>
-		</div>
+{% if result %}
+	<img class="center" src="{{result}}" />
 {% endif %}
 <form method="post" action="/gradcam/" enctype="multipart/form-data">
 	<div class="button-container">
-	<input class = "button button1" type="file" name="file" autocomplete="off">
+	<input class = "button button1" type="file" name="file" autocomplete="off" required>
 	{%if named_class%}
 		<div class="dropdown">
 			<select class="dropbtn" id="select_class" name='select_class'>
