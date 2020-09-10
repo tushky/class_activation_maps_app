@@ -1,5 +1,4 @@
 import os
-from app import app
 import urllib.request
 from base64 import b64encode
 from flask import Flask, flash, request, redirect, url_for, render_template, send_file
