@@ -5,7 +5,7 @@ from flask import Flask, flash, request, redirect, url_for, render_template, sen
 from werkzeug.utils import secure_filename
 import matplotlib.pyplot as plt
 from PIL import Image
-from model import DeconvNet
+#from model import DeconvNet
 from grad_cam import GradCAM
 from utils import load_image
 from classes import class_names

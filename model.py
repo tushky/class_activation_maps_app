@@ -3,7 +3,7 @@ import math
 import torch
 import torchvision
 import numpy as np
-from tqdm import tqdm
+#from tqdm import tqdm
 from PIL import Image
 import torch.nn as nn
 from torchvision import models
