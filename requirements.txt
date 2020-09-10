@@ -1,0 +1,7 @@
+flask==1.1.2
+torchvision==0.7.0
+gunicorn==19.9.0
+https://download.pytorch.org/whl/cpu/torch-1.6.0%2Bcpu-cp38-cp38-linux_x86_64.whl
+matplotlib==3.3.1
+numpy==1.19.1
+Pillow==7.2.0
