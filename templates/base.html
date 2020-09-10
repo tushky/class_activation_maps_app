@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        {% block title %} {% endblock %}
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+        <style>
+            h3 {text-align: center;}
+            h2 {text-align: center;}
+            h1 {text-align: center;}
+            p {text-align: center;}
+            div {text-align: center;}
+
+            .center {
+            display:inline-block;
+            margin-left: auto;
+            margin-right: auto;
+            }
+
+            .dropbtn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 16px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            }
+
+            .dropdown {
+            position: relative;
+            display: inline-block;
+            }
+
+            .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            }
+
+            .dropdown-content{
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            }
+
+            .dropdown-content a:hover {background-color: #4CAF50}
+
+            .dropdown:hover .dropdown-content {
+            display: block;
+            }
+
+            .dropdown:hover .dropbtn {
+            background-color:#ffffff;
+            }
+            .button-container form,
+            .button-container form div {
+                display: inline;
+            }
+
+            .button-container button {
+                display: inline;
+                vertical-align: middle;
+            }
+            .button {
+            background-color: #4CAF50; /* Green */
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            -webkit-transition-duration: 0.4s; /* Safari */
+            transition-duration: 0.4s;
+            }
+
+            .button1 {
+            box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+            }
+
+            .button2:hover {
+            box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24),0 17px 50px 0 rgba(0,0,0,0.19);
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="button-container">
+            <form action="/gradcam/" method='post'>
+            <button class="button button1" name = "gradcam" type="submit">Grad-CAM</button>
+            </form>
+        
+            <form action="/deconv/" method='post'>
+            <button class="button button2">Deconvolution</button>
+            </form>
+        
+            <form action="/guided/" method='post'>
+            <button class="button button2">Guided Backprop</button>
+            </form>
+        
+            <form action="/saliency/" method='post'>
+            <button class="button button2" name="saliency" type="submit">Saliency Map</button>
+            </form>
+        
+            <form action="/cam/" method='post'>
+            <button class="button button2">CAM</button>
+            </form>
+        </div>
+
+        {% block content %} {% endblock %}
+
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+        </body>
+</html>

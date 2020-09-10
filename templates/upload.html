@@ -1,0 +1,61 @@
+<!doctype html>
+<style>
+body {margin:0} /* addition */
+
+.tab-content {
+  background-color: #ffffff;
+  padding: 0; /* shorthand */
+  margin-bottom: none;
+  /*display: block; by default*/
+  overflow: hidden;
+}
+
+.tab-pane {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.tab-pane a {
+  flex: 1 0 auto; /* shorthand | flex-grow: 1; | flex-shrink: 0; | flex-basis: auto */
+}
+
+.img-responsive {
+                    max-width:150px;
+                    max-height:126px;
+             }
+</style>
+
+<title>Python Flask Image Upload and Display Example</title>
+<h2>Select an image to upload and display</h2>
+<p>
+	{% with messages = get_flashed_messages() %}
+	  {% if messages %}
+		<ul class=flashes>
+		{% for message in messages %}
+		  <li>{{ message }}</li>
+		{% endfor %}
+		</ul>
+	  {% endif %}
+	{% endwith %}
+</p>
+{% if filename %}
+<div class="tab-content clearfix">
+	<div class="tab-pane active" id="1a">
+		{%for file in filename %}
+		<div class="img-responsive">
+				<img src="{{file}}">
+		</div>
+		{% endfor %}
+	</div>
+</div>
+{% endif %}
+<form method="post" action="/" enctype="multipart/form-data">
+    <dl>
+		<p>
+			<input type="file" name="file" autocomplete="off" required>
+		</p>
+    </dl>
+    <p>
+		<input type="submit" value="Submit">
+    </p>
+</form>

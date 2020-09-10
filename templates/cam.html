@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}
+<h1>CAM: Class Activation Mapping </h1>
+{% endblock %}
+
+{% block content %}
+<p>
+	{% with messages = get_flashed_messages() %}
+	  {% if messages %}
+		<ul class=flashes>
+		{% for message in messages %}
+		  <li>{{ message }}</li>
+		{% endfor %}
+		</ul>
+	  {% endif %}
+	{% endwith %}
+</p>
+{% if filename %}
+		<img src="{{filename}}" class="center">
+{% endif %}
+<div class="button-container">
+<form method="post" action="/cam/" enctype="multipart/form-data">
+	<input class = "button button1" type="file" name="file" autocomplete="off">
+    {%if named_class%}
+        <select id="select_class" name='select_class'>
+            {% for key in named_class %}
+            <option value="{{key}}">{{named_class[key]}}</option>
+            {% endfor %}
+        </select>
+    {% endif %}
+	<button class="button button2" type="submit">Submit</button>
+</form>
+</div>
+{% endblock %}
