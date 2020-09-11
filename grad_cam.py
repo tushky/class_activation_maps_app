@@ -35,28 +35,44 @@ class Hook:
         self.handle.remove()
         print(f'{"backward" if self.backward else "forward"} hook on layer {self.name} removed')
 
-class GradCAM(nn.Module):
 
+class SubNet(nn.Module):
+
+    def __init__(self, cnn):
+
+        super().__init__()
+        cnn.eval()
+        self.avgpool = cnn.avgpool
+        self.dropout = cnn.dropout
+        self.fc = cnn.fc
+    
+    def forward(self, t):
+        t = self.avgpool(t)
+        t = torch.flatten(t, 1)
+        return self.fc(t)
+
+
+class GradCAM():
+
+    
     def __init__(self, cnn, name=None):
         
-        super().__init__()
         self.cnn = cnn
         self.name = name
         self.relu = nn.ReLU()
+        self.hook = None
         self.hook_last_conv(self)
 
     def hook_last_conv(self, name=None):
 
         model = self.cnn
-        self.hooks = []
         print(type(model))
         if isinstance(model, torchvision.models.GoogLeNet) or self.name:
             self._named_hook(model, self.name if self.name else 'inception5b', '', 0)
         else:
             conv = [None, None]
             conv = self._recursive_hook(model, conv, '', 0)
-            self.hooks.append(Hook(conv[0], conv[1])) 
-            self.hooks.append(Hook(conv[0], conv[1], backward=True))
+            self.hook = Hook(conv[0], conv[1])
 
     def _named_hook(self, module, target_name, parent_name , depth):
 
@@ -65,8 +81,7 @@ class GradCAM(nn.Module):
             name = parent_name + '_' + name if parent_name else name
             #print('\t'*depth, name)
             if name == target_name:
-                self.hooks.append(Hook(name, layer))
-                self.hooks.append(Hook(name, layer, backward = True))
+                self.hook = Hook(name, layer)
                 print(f'{name} layer hooked')
             self._named_hook(layer, target_name, name, depth+1)
 
@@ -81,51 +96,47 @@ class GradCAM(nn.Module):
             self._recursive_hook(layer, conv, name, depth+1)
         return conv
 
-    def get_cam(self, index=None):
+    def get_cam(self, image, model, index=None):
 
         self.cnn.eval()
-        pred = self.cnn(self.img)
+        with torch.no_grad():
+            original = self.cnn(image)
+            print(f'Predicted class index : {original.argmax().item()}')
+        
+        cam = self.hook.output.data
+        cam.requires_grad = True
+
+        #self.hook.remove()
+
+        pred = model(cam)
+        index = index if index else pred.argmax().item()
 
         target = torch.zeros_like(pred)
-
-        if index:
-            target[0, index] = 1
-        else:
-            target[0, pred.argmax().item()] = 1
-
+        target[0, index] = 1
         target.require_grad=True
 
-        loss = torch.sum(pred*target)
-        
-        print(loss)
+        loss = torch.sum(pred * target)
 
-        self.cnn.zero_grad()
-        loss.backward(retain_graph=True)
+        model.zero_grad()
 
-        grad = self.hooks[1].output[0].data
+        loss.backward()
+
+        grad = cam.grad
         grad = torch.mean(grad, (2,3), keepdim=True)
 
-        cam = self.hooks[0].output.data
-        out = self.relu((cam * grad).sum(1, keepdim=True))
-        out = nn.functional.interpolate(out, scale_factor=self.img.shape[2] // out.shape[2], mode='bilinear', align_corners=False)
+        out = self.relu((cam.detach() * grad).sum(1, keepdim=True))
+        out = nn.functional.interpolate(out, scale_factor=image.shape[2] // out.shape[2], mode='bilinear', align_corners=False)
         out = out.squeeze(0).squeeze(0)
         out -= out.min()
         out /= out.max()
 
-        return out
-
-    def show_cam(self, index=None):
-
-            cam = self.get_cam(index)
-            for hook in self.hooks : hook.remove()
-            plt.axis('off')
-            plt.imshow(cam, cmap='jet')
-            test_img = self.img.squeeze(0).permute(1, 2, 0).numpy()
-            plt.imshow((test_img - np.min(test_img)) / (np.max(test_img) - np.min(test_img)), alpha=0.5)
-            buf = io.BytesIO()
-            plt.savefig(buf, format='png', dpi=100)
-            buf.seek(0)
-            return Image.open(buf)
+        plt.imshow(out, cmap='jet')
+        test_img = image.squeeze(0).permute(1, 2, 0).numpy()
+        plt.imshow((test_img - np.min(test_img)) / (np.max(test_img) - np.min(test_img)), alpha=0.5)
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', dpi=100)
+        buf.seek(0)
+        return Image.open(buf), index
 
     
 
