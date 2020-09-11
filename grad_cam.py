@@ -17,18 +17,23 @@ class Hook:
     def __init__(self, name, layer, backward=False):
         
         self.name = name
-        
-        if backward:
-            #print('backward pass')
-            layer.register_backward_hook(self.hook_fn)
+        self.backward = backward
+        if self.backward:
+            print(f'backward hook set on layer {self.name}')
+            self.handle = layer.register_backward_hook(self.hook_fn)
         else:
-            layer.register_forward_hook(self.hook_fn)
+            print(f'forward hook set on layer {self.name}')
+            self.handle = layer.register_forward_hook(self.hook_fn)
             
     def hook_fn(self, module, input, output):
         self.input = input
         self.output = output
         self.module = module
-        #print(f'{self.name} output shape : {output.shape}')
+        print(f'{"backward" if self.backward else "forward"} hook executed on layer {self.name}')
+
+    def remove(self):
+        self.handle.remove()
+        print(f'{"backward" if self.backward else "forward"} hook on layer {self.name} removed')
 
 class GradCAM(nn.Module):
 
@@ -51,8 +56,7 @@ class GradCAM(nn.Module):
             conv = [None, None]
             conv = self._recursive_hook(model, conv, '', 0)
             self.hooks.append(Hook(conv[0], conv[1])) 
-            self.hooks.append(Hook(conv[0], conv[1], backward=True)) 
-            print(f'{conv[0]} layer hooked')
+            self.hooks.append(Hook(conv[0], conv[1], backward=True))
 
     def _named_hook(self, module, target_name, parent_name , depth):
 
@@ -113,7 +117,7 @@ class GradCAM(nn.Module):
     def show_cam(self, index=None):
 
             cam = self.get_cam(index)
-            
+            for hook in self.hooks : hook.remove()
             plt.axis('off')
             plt.imshow(cam, cmap='jet')
             test_img = self.img.squeeze(0).permute(1, 2, 0).numpy()

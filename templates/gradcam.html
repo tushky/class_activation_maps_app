@@ -12,7 +12,7 @@
 	  {% if messages %}
 		<ul class=flashes>
 		{% for message in messages %}
-		  <li>{{ message }}</li>
+		  <h4>{{ message }}</h4>
 		{% endfor %}
 		</ul>
 	  {% endif %}
@@ -25,15 +25,14 @@
 	<div class="button-container">
 	<input class = "button button1" type="file" name="file" autocomplete="off" required>
 	{%if named_class%}
-		<div class="dropdown">
-			<select class="dropbtn" id="select_class" name='select_class'>
+			<select id="label" name='label' style="width: 350px; height: 55px;">
+				<option disabled selected value> -- select an option -- </option>
 				{% for key in named_class %}
-				<option value="{{key}}" class="dropdown-content">{{named_class[key]}}</option>
+					<option value="{{key}}">{{named_class[key]}}</option>
 				{% endfor %}
 			</select>
-		</div>
     {% endif %}
 	<button class="button button2" type="submit">Submit</button>
+	</div>
 </form>
-</div>
 {% endblock %}

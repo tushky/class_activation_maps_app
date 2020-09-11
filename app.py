@@ -4,7 +4,6 @@ from flask import Flask, flash, request, redirect, url_for, render_template, sen
 from werkzeug.utils import secure_filename
 import matplotlib.pyplot as plt
 from PIL import Image
-#from model import DeconvNet
 from grad_cam import GradCAM
 from utils import load_image
 from classes import class_names
@@ -34,45 +33,33 @@ def upload_form():
 def cam():
 
     if request.method == 'GET':
-        active_models['cam'] = CAM(googlenet)
-        print('saving cam model')
         return render_template('cam.html')
     
     if 'file' not in request.files:
         flash('No file part')
         return redirect(request.url)
 
-    
-    if active_models.get('cam'):
-            print('exsiting model loaded')
-            cam = active_models['cam']
-    else:
-        cam = GradCAM(googlenet)
+    cam = CAM(googlenet)
 
     file = request.files['file']
-    index = None if 'select_class' not in request.form else request.form['select_class']
 
-    if file.filename == '' and not index:
-        flash('No image or class selected for uploading')
+    if file.filename == '':
+        flash('No image or selected for uploading')
         return redirect(request.url)
 
     if file and allowed_file(file.filename):
         image=Image.open(file).convert('RGB')
         cam.img = load_image(image)
-        index = None
 
     elif not hasattr(cam, 'img'):
         return redirect(request.url)
-    print('index is : ',index)
-    out = cam.get_cam(int(index) if index else None)
+    out, index = cam.get_cam()
     print(out.size)
     out = display_image(out)
     flash('Image successfully uploaded and displayed')
     class_dict = class_names()
-    if not index:
-        index = cam.cnn(cam.img).argmax().item()
-    flash(class_dict[int(index)])
-    #print(filename)
+    flash(f"Predicted class : {class_dict[int(index)]}")
+    
     return render_template('cam.html', filename=out, named_class = class_names())
 
 @app.route('/gradcam/', methods=['POST', 'GET'])
@@ -85,10 +72,12 @@ def gradcamm():
         return redirect(request.url)
 
     gradcam = GradCAM(googlenet)
-
     file = request.files['file']
-    index = None if 'select_class' not in request.form else request.form['select_class']
-
+    try:
+        index = int(request.form['label'])
+    except:
+        index = None
+    print(f'selected label was : {index}')
     if file.filename == '' and not index:
         flash('No image or class selected for uploading')
         return redirect(request.url)
@@ -96,21 +85,18 @@ def gradcamm():
     if file and allowed_file(file.filename):
         image=Image.open(file).convert('RGB')
         gradcam.img = load_image(image)
-        index = None
+        #index = None
 
     elif not hasattr(gradcam, 'img'):
         return redirect(request.url)
-    print('index is : ',index)
-    cam = gradcam.show_cam(int(index) if index else None)
-    print(cam.size)
+    cam = gradcam.show_cam(index)
     result = display_image(cam)
-    flash('Image successfully uploaded and displayed')
+    flash('Image successfully uploaded')
     class_dict = class_names()
     if not index:
         index = gradcam.cnn(gradcam.img).argmax().item()
-    flash(class_dict[int(index)])
-    #print(filename)
-    return render_template('gradcam.html', result=result)
+    flash(f' Predicted class: {class_dict[int(index)]}')
+    return render_template('gradcam.html', result=result, named_class=class_dict, selected=index)
 
 @app.route('/saliency/', methods=['POST', 'GET'])
 def saliency():
@@ -124,7 +110,7 @@ def saliency():
     
     file = request.files['file']
 
-    if file.filename == '' and index=='':
+    if file.filename == '':
         flash('No image or class selected for uploading')
         return redirect(request.url)
 
@@ -139,7 +125,7 @@ def saliency():
     out = saliency(img)
     print(out.size)
     out = display_image(out)
-    flash('Image successfully uploaded and displayed')
+    flash('Image successfully uploaded')
     return render_template('saliency.html', filename=out)
 
 
@@ -152,4 +138,4 @@ def display_image(image):
     return base64img
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)

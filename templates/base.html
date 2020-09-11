@@ -4,6 +4,8 @@
         {% block title %} {% endblock %}
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
         <style>
+
+            h4 {text-align: center;}
             h3 {text-align: center;}
             h2 {text-align: center;}
             h1 {text-align: center;}
@@ -93,14 +95,6 @@
         <div class="button-container">
             <form action="/gradcam/" method='post'>
             <button class="button button1" name = "gradcam" type="submit">Grad-CAM</button>
-            </form>
-        
-            <form action="/deconv/" method='post'>
-            <button class="button button2">Deconvolution</button>
-            </form>
-        
-            <form action="/guided/" method='post'>
-            <button class="button button2">Guided Backprop</button>
             </form>
         
             <form action="/saliency/" method='post'>

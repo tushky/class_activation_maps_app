@@ -7,7 +7,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
 import torchvision.transforms.functional as TF
-#from scipy import ndimage
 import os
 import io
 
@@ -19,15 +18,19 @@ class Hook:
         
         if backward:
             #print('backward pass')
-            layer.register_backward_hook(self.hook_fn)
+            self.handle = layer.register_backward_hook(self.hook_fn)
         else:
-            layer.register_forward_hook(self.hook_fn)
+            self.handle = layer.register_forward_hook(self.hook_fn)
             
     def hook_fn(self, module, input, output):
         self.input = input
         self.output = output
         self.module = module
         print(f'{self.name} output shape : {output.shape}')
+    
+    def remove(self):
+        self.handle.remove()
+        print(f'hook on layer {self.name} removed')
 
 
 class CAM(nn.Module):
@@ -36,28 +39,31 @@ class CAM(nn.Module):
         
         super().__init__()
         self.cnn = cnn
+        self.cnn.eval()
         self.name = name
 
         self.recursive_hook(self.cnn, self.name)
 
     
-    def get_cam(self, index):
+    def get_cam(self):
 
         pred = self.cnn(self.img)
 
         cam = self.hook.output.data
+        self.hook.remove()
         #cam = F.interpolate(cam, scale_factor=32, mode='bicubic', align_corners=False)
-        cam = cam.squeeze(0)
-        cam = cam.permute(1, 2, 0)
+        #cam = cam.squeeze(0)
+        cam = cam.permute(0, 2, 3, 1)
 
         weight = list(self.cnn.named_children())[-1][1].weight.data
         weight = weight.t()
 
         out = torch.matmul(cam, weight)
-        out = out.numpy()
+        out = out.permute(0, 3, 1, 2)
+        out = out.max(dim=1, keepdim=True).values
+        out = F.interpolate(out, scale_factor=self.img.shape[2]//out.shape[2], mode='bicubic', align_corners=False)
 
-        mean_out = np.max(out, axis=2)
-        mean_out = ndimage.zoom(mean_out, 32)
+        mean_out = out.view(out.shape[2:]).numpy()
 
         plt.imshow(mean_out, cmap='jet')
         test_img = self.img.squeeze(0).permute(1, 2, 0).numpy()
@@ -65,7 +71,7 @@ class CAM(nn.Module):
         buf = io.BytesIO()
         plt.savefig(buf, format='png')
         buf.seek(0)
-        return Image.open(buf)
+        return Image.open(buf), pred.argmax().item()
 
     def recursive_hook(self, module, target_name):
         for name, layer in module.named_children():
