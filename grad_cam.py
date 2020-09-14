@@ -42,14 +42,16 @@ class SubNet(nn.Module):
 
         super().__init__()
         cnn.eval()
-        self.avgpool = cnn.avgpool
-        self.dropout = cnn.dropout
-        self.fc = cnn.fc
+        #self.avgpool = cnn.avgpool
+        #self.dropout = cnn.dropout
+        #self.fc = cnn.fc
+        self.classifier = cnn.classifier
     
     def forward(self, t):
-        t = self.avgpool(t)
+        print(f'input tensor shape is {t.shape}')
+        t = t.mean(3).mean(2)
         t = torch.flatten(t, 1)
-        return self.fc(t)
+        return self.classifier(t)
 
 
 class GradCAM():
@@ -61,6 +63,7 @@ class GradCAM():
         self.name = name
         self.relu = nn.ReLU()
         self.hook = None
+        print(f'hook layer name : {self.name}')
         self.hook_last_conv(self)
 
     def hook_last_conv(self, name=None):
@@ -68,6 +71,7 @@ class GradCAM():
         model = self.cnn
         print(type(model))
         if isinstance(model, torchvision.models.GoogLeNet) or self.name:
+            print(f'searching for layer {self.name} recursivly')
             self._named_hook(model, self.name if self.name else 'inception5b', '', 0)
         else:
             conv = [None, None]
@@ -96,7 +100,7 @@ class GradCAM():
             self._recursive_hook(layer, conv, name, depth+1)
         return conv
 
-    def get_cam(self, image, model, index=None):
+    def get_gradcam(self, image, model, index=None):
 
         self.cnn.eval()
         with torch.no_grad():
@@ -129,7 +133,7 @@ class GradCAM():
         out = out.squeeze(0).squeeze(0)
         out -= out.min()
         out /= out.max()
-
+        plt.axis('off')
         plt.imshow(out, cmap='jet')
         test_img = image.squeeze(0).permute(1, 2, 0).numpy()
         plt.imshow((test_img - np.min(test_img)) / (np.max(test_img) - np.min(test_img)), alpha=0.5)
@@ -137,6 +141,37 @@ class GradCAM():
         plt.savefig(buf, format='png', dpi=100)
         buf.seek(0)
         return Image.open(buf), index
+
+    def get_cam(self, image):
+
+        self.cnn.eval()
+        with torch.no_grad():
+            pred = self.cnn(image)
+            print(f'Predicted class index : {pred.argmax().item()}')
+        
+        cam = self.hook.output.data
+        
+        
+        cam = cam.permute(0, 2, 3, 1)
+
+        weight = list(self.cnn.named_children())[-1][1].weight.data
+        weight = weight.t()
+
+        out = torch.matmul(cam, weight)
+        out = out.permute(0, 3, 1, 2)
+        out = out.max(dim=1, keepdim=True).values
+        out = F.interpolate(out, scale_factor=image.shape[2]//out.shape[2], mode='bicubic', align_corners=False)
+
+        mean_out = out.view(out.shape[2:]).numpy()
+        
+        plt.axis('off')
+        plt.imshow(mean_out, cmap='jet')
+        test_img = image.squeeze(0).permute(1, 2, 0).numpy()
+        plt.imshow((test_img - np.min(test_img)) / (np.max(test_img) - np.min(test_img)), alpha=0.5)
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png')
+        buf.seek(0)
+        return Image.open(buf), pred.argmax().item()
 
     
 

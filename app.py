@@ -13,8 +13,9 @@ from torchvision import models
 from utils import tensor_to_image
 import io
 
-googlenet = models.googlenet(pretrained=True)
-gradcam = GradCAM(googlenet)
+googlenet = models.mobilenet_v2(pretrained=True)
+#print(googlenet)
+gradcam = GradCAM(googlenet, name='features_18')
 model = SubNet(googlenet)
 UPLOAD_FOLDER = 'static/images/'
 
@@ -28,7 +29,7 @@ def allowed_file(filename):
 @app.route('/')
 def upload_form():
 	return render_template('index.html')
-"""
+
 @app.route('/cam/', methods=['POST', 'GET'])
 def cam():
 
@@ -39,8 +40,6 @@ def cam():
         flash('No file part')
         return redirect(request.url)
 
-    cam = CAM(googlenet)
-
     file = request.files['file']
 
     if file.filename == '':
@@ -48,12 +47,12 @@ def cam():
         return redirect(request.url)
 
     if file and allowed_file(file.filename):
-        image=Image.open(file).convert('RGB')
-        cam.img = load_image(image)
+        image= Image.open(file).convert('RGB')
+        image = load_image(image)
 
     elif not hasattr(cam, 'img'):
         return redirect(request.url)
-    out, index = cam.get_cam()
+    out, index = gradcam.get_cam(image)
     print(out.size)
     out = display_image(out)
     flash('Image successfully uploaded and displayed')
@@ -61,7 +60,7 @@ def cam():
     flash(f"Predicted class : {class_dict[int(index)]}")
     
     return render_template('cam.html', filename=out, named_class = class_names())
-"""
+
 @app.route('/gradcam/', methods=['POST', 'GET'])
 def gradcamm():
 
@@ -88,7 +87,7 @@ def gradcamm():
 
     elif not hasattr(gradcam, 'img'):
         return redirect(request.url)
-    cam, update_index = gradcam.get_cam(image, model, index)
+    cam, update_index = gradcam.get_gradcam(image, model, index)
     result = display_image(cam)
     flash('Image successfully uploaded')
     class_dict = class_names()
@@ -131,7 +130,7 @@ def saliency():
 def display_image(image):
     #image = image.resize((640, 480))
     file_object = io.BytesIO()
-    image.save(file_object, 'PNG')
+    image.save(file_object, 'png')
     file_object.seek(0)
     base64img = "data:image/png;base64," + b64encode(file_object.getvalue()).decode('ascii')
     return base64img

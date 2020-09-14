@@ -45,9 +45,9 @@ class CAM(nn.Module):
         self.recursive_hook(self.cnn, self.name)
 
     
-    def get_cam(self):
+    def get_cam(self, image):
 
-        pred = self.cnn(self.img)
+        pred = self.cnn(image)
 
         cam = self.hook.output.data
         self.hook.remove()
