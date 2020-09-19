@@ -13,9 +13,9 @@ from torchvision import models
 from utils import tensor_to_image
 import io
 
-googlenet = models.mobilenet_v2(pretrained=True)
+googlenet = models.googlenet(pretrained=True)
 #print(googlenet)
-gradcam = GradCAM(googlenet, name='features_18')
+gradcam = GradCAM(googlenet, name='inception5b')
 model = SubNet(googlenet)
 UPLOAD_FOLDER = 'static/images/'
 
@@ -136,4 +136,4 @@ def display_image(image):
     return base64img
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)

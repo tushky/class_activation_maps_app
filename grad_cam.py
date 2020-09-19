@@ -42,16 +42,21 @@ class SubNet(nn.Module):
 
         super().__init__()
         cnn.eval()
-        #self.avgpool = cnn.avgpool
-        #self.dropout = cnn.dropout
-        #self.fc = cnn.fc
-        self.classifier = cnn.classifier
+        self.avgpool = cnn.avgpool
+        self.dropout = cnn.dropout
+        self.fc = cnn.fc
+        #self.classifier = cnn.classifier
     
     def forward(self, t):
         print(f'input tensor shape is {t.shape}')
-        t = t.mean(3).mean(2)
+        #t = t.mean(3).mean(2)
+        #t = torch.flatten(t, 1)
+        #return self.classifier(t)
+        t = self.avgpool(t)
         t = torch.flatten(t, 1)
-        return self.classifier(t)
+        t = self.dropout(t)
+        t = self.fc(t)
+        return t
 
 
 class GradCAM():
