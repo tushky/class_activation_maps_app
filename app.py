@@ -1,31 +1,31 @@
+'''
+    Created By: Tushar Gadhiya
+'''
 import os
-from base64 import b64encode
-from flask import Flask, flash, request, redirect, url_for, render_template, send_file
-from werkzeug.utils import secure_filename
-import matplotlib.pyplot as plt
-from PIL import Image
-from grad_cam import GradCAM, SubNet
-from utils import load_image
-from classes import class_names
-#from saliency import SaliencyMap
-from torchvision import models
-#from cam import CAM
-from utils import tensor_to_image
 import io
+from base64 import b64encode
+from flask import Flask, flash, request, redirect, render_template
+from PIL import Image
 
-googlenet = models.googlenet(pretrained=True)
-#print(googlenet)
-gradcam = GradCAM(googlenet, name='inception5b')
-model = SubNet(googlenet)
+from torchvision import models
+from class_activation_maps import ClassActivationMaps, SubNet
+from utils import read_image
+from classes import class_names
+
+
+model = models.mobilenet_v2(pretrained=True)
+print(model)
+activation_map = ClassActivationMaps(model)
+classifier = SubNet(model)
 UPLOAD_FOLDER = 'static/images/'
-
+class_dict, name_to_index = class_names()
 app = Flask(__name__)
 app.secret_key = "secret key"
-ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
+ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'JPEG'])
 
 def allowed_file(filename):
 	return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-	
+
 @app.route('/')
 def upload_form():
 	return render_template('index.html')
@@ -37,32 +37,37 @@ def cam():
         return render_template('cam.html')
     
     if 'file' not in request.files:
-        flash('No file part')
         return redirect(request.url)
 
     file = request.files['file']
+    try:
+        index = name_to_index[request.form['myCountry']]
+        print('index:', index)
+    except:
+        index = None
 
     if file.filename == '':
-        flash('No image or selected for uploading')
+        flash('No image selected for uploading')
         return redirect(request.url)
 
     if file and allowed_file(file.filename):
         image= Image.open(file).convert('RGB')
-        image = load_image(image)
-
-    elif not hasattr(cam, 'img'):
+        image = read_image(image)
+        activation_map.img = image
+    elif not hasattr(activation_map, 'img'):
         return redirect(request.url)
-    out, index = gradcam.get_cam(image)
-    print(out.size)
-    out = display_image(out)
+    else:
+        flash('Invalid File')
+    cam, index = activation_map.show_cam(image, classifier, method='gradcam', class_index = index)
+    cam = display_image(cam)
     flash('Image successfully uploaded and displayed')
-    class_dict = class_names()
-    flash(f"Predicted class : {class_dict[int(index)]}")
     
-    return render_template('cam.html', filename=out, named_class = class_names())
+    flash(f' Showing Class Actiovation Map For: {class_dict[int(index)]}')
+    
+    return render_template('cam.html', result=cam, named_class = class_names())
 
 @app.route('/gradcam/', methods=['POST', 'GET'])
-def gradcamm():
+def gradcam():
 
     if request.method == 'GET':
         return render_template('gradcam.html')
@@ -72,7 +77,8 @@ def gradcamm():
 
     file = request.files['file']
     try:
-        index = int(request.form['label'])
+        index = name_to_index[request.form['myCountry']]
+        print('index:', index)
     except:
         index = None
     print(f'selected label was : {index}')
@@ -82,50 +88,52 @@ def gradcamm():
 
     if file and allowed_file(file.filename):
         image=Image.open(file).convert('RGB')
-        image = load_image(image)
+        image = read_image(image)
         #index = None
 
-    elif not hasattr(gradcam, 'img'):
+    elif not hasattr(activation_map, 'img'):
         return redirect(request.url)
-    cam, update_index = gradcam.get_gradcam(image, model, index)
+    cam, update_index = activation_map.show_cam(image, classifier, method='cam', class_index = index)
     result = display_image(cam)
     flash('Image successfully uploaded')
-    class_dict = class_names()
     if not index:
         index = update_index
-    flash(f' Predicted class: {class_dict[int(index)]}')
+    flash(f' Showing Class Actiovation Map For: {class_dict[int(index)]}')
     return render_template('gradcam.html', result=result, named_class=class_dict, selected=index)
-"""
-@app.route('/saliency/', methods=['POST', 'GET'])
-def saliency():
+
+@app.route('/gradcam++/', methods=['POST', 'GET'])
+def gradcamplus():
+
     if request.method == 'GET':
-        return render_template('saliency.html')
+        return render_template('gradcam++.html')
     
     if 'file' not in request.files:
-        flash('No file part')
         return redirect(request.url)
 
-    
     file = request.files['file']
-
-    if file.filename == '':
+    try:
+        index = name_to_index[request.form['myCountry']]
+        print('index:', index)
+    except:
+        index = None
+    print(f'selected label was : {index}')
+    if file.filename == '' and not index:
         flash('No image or class selected for uploading')
         return redirect(request.url)
 
     if file and allowed_file(file.filename):
         image=Image.open(file).convert('RGB')
-        img = load_image(image)
-    else:
+        image = read_image(image)
+
+    elif not hasattr(activation_map, 'img'):
         return redirect(request.url)
-
-    saliency = SaliencyMap(googlenet)
-
-    out = saliency(img)
-    print(out.size)
-    out = display_image(out)
+    cam, update_index = activation_map.show_cam(image, classifier, method='gradcam++', class_index = index)
+    result = display_image(cam)
     flash('Image successfully uploaded')
-    return render_template('saliency.html', filename=out)
-"""
+    if not index:
+        index = update_index
+    flash(f' Showing Class Actiovation Map For: {class_dict[int(index)]}')
+    return render_template('gradcam++.html', result=result, named_class=class_dict, selected=index)
 
 def display_image(image):
     #image = image.resize((640, 480))

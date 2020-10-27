@@ -5,24 +5,31 @@
 {% endblock %}
 
 {% block content %}
+
 <p>
+	<h3>CAM highlights regions of the image the classification model looks at while making predictions.</h3>
 	{% with messages = get_flashed_messages() %}
 	  {% if messages %}
 		<ul class=flashes>
 		{% for message in messages %}
-		  <li>{{ message }}</li>
+		  <h4>{{ message }}</h4>
 		{% endfor %}
 		</ul>
 	  {% endif %}
 	{% endwith %}
 </p>
-{% if filename %}
-		<img src="{{filename}}" class="center">
+{% if result %}
+	<img class="center" src="{{result}}" />
+{% else %}
+	<img class="center" src="/static/cam.png" />
 {% endif %}
-<div class="button-container">
-<form method="post" action="/cam/" enctype="multipart/form-data">
-	<input class = "button button1" type="file" name="file" autocomplete="off">
-	<button class="button button2" type="submit">Submit</button>
+<form method="post" action="/cam/" enctype="multipart/form-data" autocomplete="off">
+	<div class="button-container">
+	<input class = "button button1" type="file" name="file" autocomplete="off" required>
+	<div class="autocomplete" style="width:300px;">
+		<input id="label" type="text" name="myCountry" placeholder="Select Class (Optional)">
+	</div>
+	<input class="button button2" type="submit">
+	</div>
 </form>
-</div>
 {% endblock %}

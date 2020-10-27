@@ -1,5 +1,5 @@
 def class_names():
-    return {
+    d =  {
     0: 'tench, Tinca tinca',
     1: 'goldfish, Carassius auratus',
     2: 'great white shark, white shark, man-eater, man-eating shark, Carcharodon carcharias',
@@ -1000,3 +1000,9 @@ def class_names():
     997: 'bolete',
     998: 'ear, spike, capitulum',
     999: 'toilet tissue, toilet paper, bathroom tissue'}
+
+    name_to_index = {}
+    for key in d:
+        for name in d[key].split(', '):
+            name_to_index[name] = key
+    return d, name_to_index

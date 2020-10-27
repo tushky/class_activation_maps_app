@@ -20,19 +20,16 @@
 </p>
 {% if result %}
 	<img class="center" src="{{result}}" />
+{% else %}
+	<img class="center" src="/static/gradcam.png" />
 {% endif %}
-<form method="post" action="/gradcam/" enctype="multipart/form-data">
+<form method="post" action="/gradcam/" enctype="multipart/form-data" autocomplete="off">
 	<div class="button-container">
 	<input class = "button button1" type="file" name="file" autocomplete="off" required>
-	{%if named_class%}
-			<select id="label" name='label' style="width: 350px; height: 55px;">
-				<option disabled selected value> -- select an option -- </option>
-				{% for key in named_class %}
-					<option value="{{key}}">{{named_class[key]}}</option>
-				{% endfor %}
-			</select>
-    {% endif %}
-	<button class="button button2" type="submit">Submit</button>
+	<div class="autocomplete" style="width:300px;">
+		<input id="label" type="text" name="myCountry" placeholder="Select Class (Optional)">
+	</div>
+	<input class="button button2" type="submit">
 	</div>
 </form>
 {% endblock %}
