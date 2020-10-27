@@ -51,13 +51,15 @@ def cam():
         return redirect(request.url)
 
     if file and allowed_file(file.filename):
-        image= Image.open(file).convert('RGB')
-        image = read_image(image)
-        activation_map.img = image
-    elif not hasattr(activation_map, 'img'):
-        return redirect(request.url)
+        try:
+            image= Image.open(file).convert('RGB')
+            image = read_image(image)
+        except:
+            flash('Invalid file')
+            return redirect(request.url)
     else:
-        flash('Invalid File')
+        flash('Invalid file')
+        return redirect(request.url)
     cam, index = activation_map.show_cam(image, classifier, method='gradcam', class_index = index)
     cam = display_image(cam)
     flash('Image successfully uploaded and displayed')
@@ -87,11 +89,14 @@ def gradcam():
         return redirect(request.url)
 
     if file and allowed_file(file.filename):
-        image=Image.open(file).convert('RGB')
-        image = read_image(image)
-        #index = None
-
-    elif not hasattr(activation_map, 'img'):
+        try:
+            image= Image.open(file).convert('RGB')
+            image = read_image(image)
+        except:
+            flash('Invalid file')
+            return redirect(request.url)
+    else:
+        flash('Invalid file')
         return redirect(request.url)
     cam, update_index = activation_map.show_cam(image, classifier, method='cam', class_index = index)
     result = display_image(cam)
@@ -122,10 +127,14 @@ def gradcamplus():
         return redirect(request.url)
 
     if file and allowed_file(file.filename):
-        image=Image.open(file).convert('RGB')
-        image = read_image(image)
-
-    elif not hasattr(activation_map, 'img'):
+        try:
+            image= Image.open(file).convert('RGB')
+            image = read_image(image)
+        except:
+            flash('Invalid file')
+            return redirect(request.url)
+    else:
+        flash('Invalid file')
         return redirect(request.url)
     cam, update_index = activation_map.show_cam(image, classifier, method='gradcam++', class_index = index)
     result = display_image(cam)
