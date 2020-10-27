@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
 {% block title %}
-<h1>Grad-CAM: Gradient-weighted Class Activation Mapping </h1>
+<h1>{{fency_name}}</h1>
 {% endblock %}
 
 {% block content %}
 
 <p>
-	<h3>Grad-CAM highlights regions of the image the classification model looks at while making predictions.</h3>
+	<h3>Class Activation Map highlights regions of the image the classification model looks at while making predictions.</h3>
 	{% with messages = get_flashed_messages() %}
 	  {% if messages %}
 		<ul class=flashes>
@@ -20,14 +20,21 @@
 </p>
 {% if result %}
 	<img class="center" src="{{result}}" />
-{% else %}
-	<img class="center" src="/static/gradcam.png" />
 {% endif %}
-<form method="post" action="/gradcam/" enctype="multipart/form-data" autocomplete="off">
+{% if not result and method =='cam' %}
+	<img class="center" src="/static/cam.png" />
+	{% endif %}
+{% if not result and method =='gradcam' %}
+	<img class="center" src="/static/gradcam.png" />
+	{% endif %}
+{% if not result and method =='gradcam++' %}
+	<img class="center" src="/static/gradcam++.png" />
+{% endif %}
+<form method="post" action="{{method}}" enctype="multipart/form-data" autocomplete="off">
 	<div class="button-container">
 	<input class = "button button1" type="file" name="file" autocomplete="off" required>
 	<div class="autocomplete" style="width:300px;">
-		<input id="label" type="text" name="myCountry" placeholder="Select Class (Optional)">
+		<input id="label" type="text" name="class_name" placeholder="Select Class (Optional)">
 	</div>
 	<input class="button button2" type="submit">
 	</div>

@@ -30,18 +30,21 @@ def allowed_file(filename):
 def upload_form():
 	return render_template('index.html')
 
-@app.route('/cam/', methods=['POST', 'GET'])
-def cam():
-
+@app.route('/<method>', methods=['POST', 'GET'])
+def get_cam(method):
+    fency_name = ''
+    if method == 'cam' : fency_name = 'CAM: Class Activation Map'
+    elif method == 'gradcam' : fency_name = 'Grad-CAM: Gradient Weighted Class Activation Map'
+    elif method == 'gradcam++' : fency_name = 'Grad-CAM++: Gradient Weighted Class Activation Map++'
     if request.method == 'GET':
-        return render_template('cam.html')
+        return render_template('get_cam.html', result=False, method=method, fency_name=fency_name)
     
     if 'file' not in request.files:
         return redirect(request.url)
 
     file = request.files['file']
     try:
-        index = name_to_index[request.form['myCountry']]
+        index = name_to_index[request.form['class_name']]
         print('index:', index)
     except:
         index = None
@@ -60,89 +63,13 @@ def cam():
     else:
         flash('Invalid file')
         return redirect(request.url)
-    cam, index = activation_map.show_cam(image, classifier, method='gradcam', class_index = index)
+    cam, index = activation_map.show_cam(image, classifier, method=method, class_index = index)
     cam = display_image(cam)
     flash('Image successfully uploaded and displayed')
     
     flash(f' Showing Class Actiovation Map For: {class_dict[int(index)]}')
     
-    return render_template('cam.html', result=cam, named_class = class_names())
-
-@app.route('/gradcam/', methods=['POST', 'GET'])
-def gradcam():
-
-    if request.method == 'GET':
-        return render_template('gradcam.html')
-    
-    if 'file' not in request.files:
-        return redirect(request.url)
-
-    file = request.files['file']
-    try:
-        index = name_to_index[request.form['myCountry']]
-        print('index:', index)
-    except:
-        index = None
-    print(f'selected label was : {index}')
-    if file.filename == '' and not index:
-        flash('No image or class selected for uploading')
-        return redirect(request.url)
-
-    if file and allowed_file(file.filename):
-        try:
-            image= Image.open(file).convert('RGB')
-            image = read_image(image)
-        except:
-            flash('Invalid file')
-            return redirect(request.url)
-    else:
-        flash('Invalid file')
-        return redirect(request.url)
-    cam, update_index = activation_map.show_cam(image, classifier, method='cam', class_index = index)
-    result = display_image(cam)
-    flash('Image successfully uploaded')
-    if not index:
-        index = update_index
-    flash(f' Showing Class Actiovation Map For: {class_dict[int(index)]}')
-    return render_template('gradcam.html', result=result, named_class=class_dict, selected=index)
-
-@app.route('/gradcam++/', methods=['POST', 'GET'])
-def gradcamplus():
-
-    if request.method == 'GET':
-        return render_template('gradcam++.html')
-    
-    if 'file' not in request.files:
-        return redirect(request.url)
-
-    file = request.files['file']
-    try:
-        index = name_to_index[request.form['myCountry']]
-        print('index:', index)
-    except:
-        index = None
-    print(f'selected label was : {index}')
-    if file.filename == '' and not index:
-        flash('No image or class selected for uploading')
-        return redirect(request.url)
-
-    if file and allowed_file(file.filename):
-        try:
-            image= Image.open(file).convert('RGB')
-            image = read_image(image)
-        except:
-            flash('Invalid file')
-            return redirect(request.url)
-    else:
-        flash('Invalid file')
-        return redirect(request.url)
-    cam, update_index = activation_map.show_cam(image, classifier, method='gradcam++', class_index = index)
-    result = display_image(cam)
-    flash('Image successfully uploaded')
-    if not index:
-        index = update_index
-    flash(f' Showing Class Actiovation Map For: {class_dict[int(index)]}')
-    return render_template('gradcam++.html', result=result, named_class=class_dict, selected=index)
+    return render_template('get_cam.html', result=cam, named_class = class_names(), method=method, fency_name=fency_name)
 
 def display_image(image):
     #image = image.resize((640, 480))
@@ -153,4 +80,4 @@ def display_image(image):
     return base64img
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
