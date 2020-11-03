@@ -14,7 +14,6 @@ from classes import class_names
 
 
 model = models.mobilenet_v2(pretrained=True)
-print(model)
 activation_map = ClassActivationMaps(model)
 classifier = SubNet(model)
 UPLOAD_FOLDER = 'static/images/'
